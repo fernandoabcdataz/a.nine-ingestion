@@ -27,6 +27,6 @@ variable "client_name" {
 }
 
 variable "service_account_email" {
-  description = "The email of the service account to use for the Xero API service"
+  description = "email of the service account to use for the Xero API service"
   type        = string
 }

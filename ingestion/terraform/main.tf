@@ -116,7 +116,7 @@ resource "google_cloud_scheduler_job" "xero_api_scheduler" {
   http_target {
     http_method = "POST"
     uri         = google_cloud_run_service.xero_api.status[0].url
-    
+
     oidc_token {
       service_account_email = var.service_account_email
       audience              = google_cloud_run_service.xero_api.status[0].url
@@ -128,7 +128,46 @@ resource "google_cloud_scheduler_job" "xero_api_scheduler" {
   depends_on = [google_cloud_run_service.xero_api]
 }
 
-# Output the Cloud Run service URL
-output "cloud_run_url" {
-  value = google_cloud_run_service.xero_api.status[0].url
+locals {
+  ingestion_dataset_id = "${var.client_name}_ingestion"
+  gcs_bucket_name      = "${var.project}-${var.client_name}-xero-data"
+}
+
+resource "google_bigquery_dataset" "ingestion_dataset" {
+  project    = var.project
+  dataset_id = local.ingestion_dataset_id
+  location   = var.region
+
+  labels = {
+    environment = "dev"
+  }
+
+  # Add this to prevent destruction of the dataset if it already exists
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "google_storage_bucket_objects" "xero_files" {
+  bucket = local.gcs_bucket_name
+}
+
+resource "google_bigquery_table" "external_tables" {
+  for_each = { for obj in data.google_storage_bucket_objects.xero_files.items : obj.name => obj if endswith(obj.name, ".json") }
+
+  project    = var.project
+  dataset_id = local.ingestion_dataset_id
+  table_id   = "xero_${replace(each.key, ".json", "")}"
+
+  external_data_configuration {
+    autodetect    = true
+    source_format = "NEWLINE_DELIMITED_JSON"
+    source_uris   = ["gs://${local.gcs_bucket_name}/${each.key}"]
+  }
+
+  depends_on = [google_bigquery_dataset.ingestion_dataset]
+}
+
+output "ingestion_dataset_id" {
+  value = local.ingestion_dataset_id
 }

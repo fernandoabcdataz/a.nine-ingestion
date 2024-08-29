@@ -99,14 +99,6 @@ resource "google_cloud_run_service_iam_member" "allUsers" {
   member   = "allUsers"
 }
 
-# resource "google_cloud_run_service_iam_member" "invoker" {
-#   location = google_cloud_run_service.xero_api.location
-#   project  = google_cloud_run_service.xero_api.project
-#   service  = google_cloud_run_service.xero_api.name
-#   role     = "roles/run.invoker"
-#   member   = "serviceAccount:${var.service_account_email}"
-# }
-
 resource "google_cloud_scheduler_job" "xero_api_scheduler" {
   name        = "${var.project}-${var.client_name}-xero-api-scheduler"
   description = "Scheduler job to invoke Cloud Run service every hour"
@@ -131,6 +123,15 @@ resource "google_cloud_scheduler_job" "xero_api_scheduler" {
 locals {
   ingestion_dataset_id = "${var.client_name}_ingestion"
   gcs_bucket_name      = "${var.project}-${var.client_name}-xero-data"
+  xero_file_names      = [
+    "accounts", "bank_transactions", "bank_transfers", "batch_payments", "branding_themes",
+    "budgets", "contact_groups", "contacts", "credit_notes", "currencies", "employees",
+    "invoices", "items", "journals", "linked_transactions", "manual_journals", "organisation",
+    "overpayments", "payment_services", "payments", "prepayments", "purchase_orders", "quotes",
+    "repeating_invoices", "reports__balance_sheet", "reports__bank_summary", "reports__budget_summary",
+    "reports__executive_summary", "reports__gst_report", "reports__trial_balance", "tax_rates",
+    "tracking_categories", "users"
+  ]
 }
 
 resource "google_bigquery_dataset" "ingestion_dataset" {
@@ -142,32 +143,42 @@ resource "google_bigquery_dataset" "ingestion_dataset" {
     environment = "dev"
   }
 
-  # Add this to prevent destruction of the dataset if it already exists
   lifecycle {
     prevent_destroy = true
   }
 }
 
-data "google_storage_bucket_objects" "xero_files" {
+data "google_storage_bucket_object" "file_check" {
+  for_each = toset(local.xero_file_names)
+  
+  name   = "${each.key}.json"
   bucket = local.gcs_bucket_name
 }
 
 resource "google_bigquery_table" "external_tables" {
-  for_each = { for obj in data.google_storage_bucket_objects.xero_files.items : obj.name => obj if endswith(obj.name, ".json") }
+  for_each = {
+    for name in local.xero_file_names :
+    name => data.google_storage_bucket_object.file_check[name]
+    if data.google_storage_bucket_object.file_check[name].size > 0
+  }
 
   project    = var.project
-  dataset_id = local.ingestion_dataset_id
-  table_id   = "xero_${replace(each.key, ".json", "")}"
+  dataset_id = google_bigquery_dataset.ingestion_dataset.dataset_id
+  table_id   = "xero_${each.key}"
 
   external_data_configuration {
     autodetect    = true
     source_format = "NEWLINE_DELIMITED_JSON"
-    source_uris   = ["gs://${local.gcs_bucket_name}/${each.key}"]
+    source_uris   = ["gs://${local.gcs_bucket_name}/${each.key}.json"]
   }
 
   depends_on = [google_bigquery_dataset.ingestion_dataset]
+
+  lifecycle {
+    ignore_changes = [external_data_configuration[0].source_uris]
+  }
 }
 
 output "ingestion_dataset_id" {
-  value = local.ingestion_dataset_id
+  value = google_bigquery_dataset.ingestion_dataset.dataset_id
 }

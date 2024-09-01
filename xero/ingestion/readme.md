@@ -2,7 +2,6 @@
 This project implements a data pipeline to fetch data from the Xero API and store it in Google Cloud Storage. It uses Google Cloud Run for serverless deployment and Cloud Scheduler for automated hourly data retrieval.
 
 ## Project Structure
-
 ```
 ingestion
 ├── code/
@@ -14,10 +13,6 @@ ingestion
   ├── storage.py
   ├── requirements.txt
   └── Dockerfile
-├── terraform/
-  ├── main.tf
-  ├── variables.tf
-  └── terraform.tfvars
 ├── README.md
 ```
 

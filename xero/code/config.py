@@ -1,5 +1,8 @@
 import os
 
+# constants that don't change across clients
+TOKEN_URL = 'https://identity.xero.com/connect/token'
+
 ENDPOINTS = {
     'accounts': 'https://api.xero.com/api.xro/2.0/Accounts',
     # 'attachments': 'https://api.xero.com/api.xro/2.0/{Endpoint}/{Guid}/Attachments',
@@ -40,7 +43,27 @@ ENDPOINTS = {
     'users': 'https://api.xero.com/api.xro/2.0/Users',
 }
 
-TOKEN_URL = 'https://identity.xero.com/connect/token'
-CLIENT_NAME = os.getenv('CLIENT_NAME')
-PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-BUCKET_NAME = f"{PROJECT_ID}-{CLIENT_NAME}-xero-data"
+DEFAULT_CLIENT_NAME = os.getenv("CLIENT_NAME", "default_client")
+DEFAULT_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "default_project")
+
+def get_client_config():
+    client_name = DEFAULT_CLIENT_NAME
+    project_id = DEFAULT_PROJECT_ID
+
+    bucket_name = f"{project_id}-{client_name}-xero-data"
+    secrets_path = f"projects/{project_id}/secrets"
+
+    return {
+        "CLIENT_NAME": client_name,
+        "PROJECT_ID": project_id,
+        "BUCKET_NAME": bucket_name,
+        "SECRETS_PATH": secrets_path,
+    }
+
+CLIENT_CONFIG = get_client_config()
+
+CONFIG = {
+    **CLIENT_CONFIG,
+    "TOKEN_URL": TOKEN_URL,
+    "ENDPOINTS": ENDPOINTS,
+}

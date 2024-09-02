@@ -1,4 +1,7 @@
-import os
+from airflow.models import Variable
+
+# constants that don't change across clients
+TOKEN_URL = 'https://identity.xero.com/connect/token'
 
 ENDPOINTS = {
     'accounts': 'https://api.xero.com/api.xro/2.0/Accounts',
@@ -40,7 +43,40 @@ ENDPOINTS = {
     'users': 'https://api.xero.com/api.xro/2.0/Users',
 }
 
-TOKEN_URL = 'https://identity.xero.com/connect/token'
-CLIENT_NAME = os.getenv('CLIENT_NAME')
-PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
-BUCKET_NAME = f"{PROJECT_ID}-{CLIENT_NAME}-xero-data"
+# default values (can be overridden by airflow variables)
+DEFAULT_CLIENT_NAME = "default_client"
+DEFAULT_PROJECT_ID = "default_project"
+
+def get_client_config():
+    # get client name from Airflow variable, DAG run configuration, or use default
+    client_name = Variable.get("CLIENT_NAME", DEFAULT_CLIENT_NAME)
+    
+    # allow overriding client name when triggering DAG run
+    dag_run_conf = Variable.get("dag_run", {}).get("conf", {})
+    client_name = dag_run_conf.get("client_name", client_name)
+
+    # get project ID from Airflow variable or use default
+    project_id = Variable.get("GOOGLE_CLOUD_PROJECT", DEFAULT_PROJECT_ID)
+
+    # construct bucket name
+    bucket_name = f"{project_id}-{client_name}-xero-data"
+
+    # secrets path (adjust as needed for your setup)
+    secrets_path = f"projects/{project_id}/secrets"
+
+    return {
+        "CLIENT_NAME": client_name,
+        "PROJECT_ID": project_id,
+        "BUCKET_NAME": bucket_name,
+        "SECRETS_PATH": secrets_path,
+    }
+
+# global config objects
+CLIENT_CONFIG = get_client_config()
+
+# combined configuration
+CONFIG = {
+    **CLIENT_CONFIG,
+    "TOKEN_URL": TOKEN_URL,
+    "ENDPOINTS": ENDPOINTS,
+}

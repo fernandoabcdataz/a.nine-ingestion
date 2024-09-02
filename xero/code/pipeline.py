@@ -1,6 +1,6 @@
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
-from config import ENDPOINTS
+from config import CONFIG
 from api import fetch_data_from_endpoint
 from storage import WriteJSONToGCS
 import json
@@ -10,7 +10,7 @@ logger = structlog.get_logger()
 
 class FetchDataFromEndpoints(beam.DoFn):
     def process(self, element):
-        for name, endpoint in ENDPOINTS.items():
+        for name, endpoint in CONFIG['ENDPOINTS'].items():
             logger.info("processing_endpoint", name=name)
             try:
                 data = fetch_data_from_endpoint(endpoint)

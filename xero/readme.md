@@ -1,140 +1,86 @@
-# Xero Data Pipeline
+# Xero Data Fetching Service
 
-This project implements a data pipeline to fetch data from the Xero API and store it in Google Cloud Storage. It uses Google Cloud Run for serverless deployment and Cloud Scheduler for automated hourly data retrieval.
+This repository contains a Cloud Run service that fetches data from Xero API endpoints and stores it in Google Cloud Storage.
 
-## Project Structure
-```
-ingestion/
-├── code/
-│   ├── main.py
-│   ├── config.py
-│   ├── auth.py
-│   ├── api.py
-│   ├── pipeline.py
-│   ├── storage.py
-│   ├── requirements.txt
-│   └── Dockerfile
-└── README.md
-```
+## Overview
 
-## Prerequisites
+The service is designed to run on Google Cloud Platform and uses the following technologies:
 
-- Google Cloud Platform account
-- Xero Developer account
-- Google Cloud SDK installed locally
-- Python 3.7+ installed locally
+- Python 3.9
+- Flask
+- Apache Beam
+- Google Cloud Run
+- Google Cloud Storage
+- Google Secret Manager
+
+## Structure
+
+- `main.py`: Entry point for the Flask application
+- `pipeline.py`: Contains the Apache Beam pipeline for data processing
+- `config.py`: Configuration management
+- `auth.py`: Handles authentication with Xero API
+- `api.py`: Manages API calls to Xero
+- `storage.py`: Handles interactions with Google Cloud Storage
+- `Dockerfile`: Defines the container for the Cloud Run service
+- `requirements.txt`: Lists Python dependencies
 
 ## Setup
 
-1. Clone this repository:
+1. Clone this repository
+2. Ensure you have the Google Cloud SDK installed and configured
+3. Create a `.env` file with the following variables:
    ```
-   git clone https://github.com/fernandoabcdataz/a.nine-ingestion
-   cd xero-data-pipeline/ingestion
+   CLIENT_NAME=your_client_name
+   GOOGLE_CLOUD_PROJECT=your_gcp_project_id
    ```
-
-2. Set up a virtual environment:
+4. Build and push the Docker image:
    ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
-
-3. Install dependencies:
-   ```
-   pip install -r code/requirements.txt
-   ```
-
-4. Set up environment variables:
-   ```
-   export XERO_CLIENT_ID="YOUR_XERO_CLIENT_ID"
-   export XERO_CLIENT_SECRET="YOUR_XERO_CLIENT_SECRET"
-   export GCP_PROJECT_ID="YOUR_GCP_PROJECT_ID"
-   export GCP_STORAGE_BUCKET="YOUR_GCS_BUCKET_NAME"
-   ```
-
-## Local Development and Testing
-
-1. Run the main script locally:
-   ```
-   python code/main.py
-   ```
-
-2. Run unit tests:
-   ```
-   python -m unittest discover tests
+   docker build -t gcr.io/[PROJECT-ID]/[CLIENT-NAME]-xero:latest .
+   docker push gcr.io/[PROJECT-ID]/[CLIENT-NAME]-xero:latest
    ```
 
 ## Deployment
-1. Build and push your Docker image to Google Container Registry:
-   
-   ```
-   gcloud builds submit --tag gcr.io/${GCP_PROJECT_ID}/xero-api ./code
-   ```
 
-2. Deploy to Cloud Run (if not using Terraform):
-   ```
-   gcloud run deploy xero-api --image gcr.io/${GCP_PROJECT_ID}/xero-api --platform managed
-   ```
+This service is designed to be deployed using Terraform. The Terraform configuration should:
+
+1. Create a Google Cloud Storage bucket
+2. Set up Google Secret Manager secrets for Xero API credentials
+3. Deploy the Cloud Run service
+4. Configure a Cloud Scheduler job to trigger the service periodically
+
+Refer to the Terraform configuration in the infrastructure repository for details.
 
 ## Usage
 
-Once deployed, the Cloud Scheduler will automatically trigger the Cloud Run service every hour to fetch data from Xero and store it in Google Cloud Storage.
+Once deployed, the service can be triggered via HTTP POST request to the `/run` endpoint. This will initiate the data fetching process from Xero and store the results in the configured Google Cloud Storage bucket.
 
-You can also manually trigger the pipeline by sending a POST request to the Cloud Run service URL.
+## Environment Variables
 
-## Configuration
+The service expects the following environment variables:
 
-- Modify `config.py` to adjust the Xero API endpoints you want to fetch data from.
-- Update `pipeline.py` if you need to change the data processing logic.
+- `CLIENT_NAME`: The name of the client (used in naming resources)
+- `GOOGLE_CLOUD_PROJECT`: The Google Cloud Project ID
 
-## Monitoring and Logging
-
-1. View Cloud Run logs:
-   ```
-   gcloud run logs read --service xero-api
-   ```
-
-2. Set up Cloud Monitoring alerts:
-   - Go to the Google Cloud Console
-   - Navigate to Monitoring > Alerting
-   - Create alerts for metrics like Cloud Run request count, error rate, etc.
-
-## Data Schema
-
-The data stored in Google Cloud Storage follows this structure:
-
-- `invoices/YYYY-MM-DD/invoices.json`
-- `contacts/YYYY-MM-DD/contacts.json`
-- `accounts/YYYY-MM-DD/accounts.json`
-
-Each file contains a JSON array of objects as returned by the Xero API.
-
-## Extending the Pipeline
-
-To add a new Xero API endpoint:
-
-1. Add the new endpoint URL to `config.py`
-2. Create a new method in `api.py` to fetch data from this endpoint
-3. Update `pipeline.py` to process and store the new data type
-4. Modify `main.py` to include the new data fetch in the main pipeline
-
-## Troubleshooting
-
-Common issues and solutions:
-
-1. "Permission denied" errors: Ensure the service account has the necessary permissions.
-2. Data not appearing in GCS: Check Cloud Run logs for any API or storage errors.
-3. Cloud Run container failing to start: Verify the Dockerfile and ensure it's listening on the correct port.
+These should be set in the Cloud Run service configuration.
 
 ## Security
 
-- Xero API credentials are stored securely in Google Secret Manager.
-- A dedicated service account is used for the Cloud Run service with minimal necessary permissions.
-- Ensure that any files containing sensitive information are not committed to version control.
+- Xero API credentials are stored in Google Secret Manager
+- The service uses a dedicated service account with minimal necessary permissions
+- All communication is done over HTTPS
+
+## Monitoring and Logging
+
+Logs are available in Google Cloud Console under the Cloud Run service. Consider setting up log-based metrics and alerts for production use.
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+Distributed under the MIT License. See `LICENSE` for more information.

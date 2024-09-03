@@ -1,1 +1,4 @@
+beam-env/
 .DS_Store
+service-account.json
+.env

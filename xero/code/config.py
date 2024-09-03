@@ -43,12 +43,15 @@ ENDPOINTS = {
     'users': 'https://api.xero.com/api.xro/2.0/Users',
 }
 
-DEFAULT_CLIENT_NAME = os.getenv("CLIENT_NAME", "default_client")
-DEFAULT_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "default_project")
+def get_env_variable(var_name):
+    value = os.getenv(var_name)
+    if value is None:
+        raise ValueError(f"Environment variable {var_name} is not set")
+    return value
 
 def get_client_config():
-    client_name = DEFAULT_CLIENT_NAME
-    project_id = DEFAULT_PROJECT_ID
+    client_name = get_env_variable("CLIENT_NAME")
+    project_id = get_env_variable("GOOGLE_CLOUD_PROJECT")
 
     bucket_name = f"{project_id}-{client_name}-xero-data"
     secrets_path = f"projects/{project_id}/secrets"

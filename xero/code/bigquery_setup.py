@@ -12,22 +12,19 @@ def create_external_tables():
     for endpoint, url in ENDPOINTS.items():
         table_id = f"{dataset_id}.xero_{endpoint}"
         
-        schema = [
-            bigquery.SchemaField("data", "STRING", mode="NULLABLE"),
-        ]
-
         external_config = bigquery.ExternalConfig("NEWLINE_DELIMITED_JSON")
         external_config.source_uris = [
             f"gs://{CONFIG['BUCKET_NAME']}/{endpoint}.json"
         ]
-        external_config.schema = schema
+        external_config.autodetect = True
 
-        table = bigquery.Table(table_id, schema=schema)
+        table = bigquery.Table(table_id)
         table.external_data_configuration = external_config
 
         try:
-            client.create_table(table, exists_ok=True)
-            logger.info(f"Created or updated external table {table_id}")
+            client.delete_table(table_id, not_found_ok=True)
+            client.create_table(table)
+            logger.info(f"Created external table {table_id}")
         except Exception as e:
             logger.error(f"Error creating external table {table_id}: {str(e)}")
 

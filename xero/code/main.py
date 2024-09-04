@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from pipeline import run_pipeline
 from config import CONFIG
+from bigquery_setup import create_external_tables
 import structlog
 import traceback
 
@@ -16,7 +17,8 @@ def trigger_pipeline():
         bucket_name = f"{project_id}-{client_name}-xero-data"
         
         run_pipeline(bucket_name)
-        return jsonify({"message": "Pipeline completed successfully"}), 200
+        create_external_tables()
+        return jsonify({"message": "pipeline completed successfully and BigQuery tables created"}), 200
     except Exception as e:
         error_message = f"Pipeline error: {str(e)}"
         logger.error(error_message, traceback=traceback.format_exc())

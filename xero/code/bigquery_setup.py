@@ -15,15 +15,6 @@ def create_external_tables():
         external_config = bigquery.ExternalConfig("NEWLINE_DELIMITED_JSON")
         external_config.source_uris = [f"gs://{CONFIG['BUCKET_NAME']}/{endpoint}.json"]
         external_config.autodetect = True
-        external_config.schema = [
-            bigquery.SchemaField("ingestion_time", "TIMESTAMP", mode="REQUIRED"),
-        ]
-        external_config.hive_partitioning_mode = "CUSTOM"
-        external_config.hive_partitioning_options = bigquery.HivePartitioningOptions(
-            mode="CUSTOM",
-            source_uri_prefix=f"gs://{CONFIG['BUCKET_NAME']}/",
-            fields=["ingestion_time"],
-        )
 
         table = bigquery.Table(table_id)
         table.external_data_configuration = external_config

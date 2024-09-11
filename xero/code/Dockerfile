@@ -15,5 +15,9 @@ EXPOSE 8080
 # define environment variable
 ENV PORT=8080
 
+# these should be overwritten by your terraform setup
+ENV CLIENT_NAME=default_client
+ENV GOOGLE_CLOUD_PROJECT=default_project
+
 # run main.py when the container launches
 CMD ["python", "main.py"]

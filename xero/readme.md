@@ -1,6 +1,6 @@
 # Xero Data Fetching Service
 
-This repository contains a Cloud Run service that fetches data from Xero API endpoints and stores it in Google Cloud Storage.
+This repository contains a Cloud Run service that fetches data from Xero API endpoints and stores it in Google Cloud Storage using Apache Beam for efficient data processing.
 
 ## Overview
 
@@ -12,6 +12,16 @@ The service is designed to run on Google Cloud Platform and uses the following t
 - Google Cloud Run
 - Google Cloud Storage
 - Google Secret Manager
+- Google BigQuery
+
+## Key Features
+
+- Parallel data fetching from multiple Xero API endpoints using Apache Beam
+- Implements pagination for handling large datasets
+- Rate limiting to comply with Xero API restrictions
+- Error handling and retry logic
+- Efficient data storage in Google Cloud Storage
+- Creates BigQuery external tables for easy data analysis
 
 ## Structure
 
@@ -19,8 +29,9 @@ The service is designed to run on Google Cloud Platform and uses the following t
 - `pipeline.py`: Contains the Apache Beam pipeline for data processing
 - `config.py`: Configuration management
 - `auth.py`: Handles authentication with Xero API
-- `api.py`: Manages API calls to Xero
-- `storage.py`: Handles interactions with Google Cloud Storage
+- `api.py`: Manages API calls to Xero, including pagination and rate limiting
+- `storage.py`: Handles interactions with Google Cloud Storage using Apache Beam
+- `bigquery_setup.py`: Sets up BigQuery external tables
 - `Dockerfile`: Defines the container for the Cloud Run service
 - `requirements.txt`: Lists Python dependencies
 
@@ -28,12 +39,7 @@ The service is designed to run on Google Cloud Platform and uses the following t
 
 1. Clone this repository
 2. Ensure you have the Google Cloud SDK installed and configured
-3. Create a `.env` file with the following variables:
-   ```
-   CLIENT_NAME=your_client_name
-   GOOGLE_CLOUD_PROJECT=your_gcp_project_id
-   ```
-4. Build and push the Docker image:
+3. Build and push the Docker image:
    ```
    docker build -t gcr.io/[PROJECT-ID]/[CLIENT-NAME]-xero:latest .
    docker push gcr.io/[PROJECT-ID]/[CLIENT-NAME]-xero:latest
@@ -52,7 +58,7 @@ Refer to the Terraform configuration in the infrastructure repository for detail
 
 ## Usage
 
-Once deployed, the service can be triggered via HTTP POST request to the `/run` endpoint. This will initiate the data fetching process from Xero and store the results in the configured Google Cloud Storage bucket.
+Once deployed, the service can be triggered via HTTP POST request to the `/run` endpoint. This will initiate the data fetching process from Xero, process it using Apache Beam, and store the results in the configured Google Cloud Storage bucket.
 
 ## Environment Variables
 
@@ -63,6 +69,12 @@ The service expects the following environment variables:
 
 These should be set in the Cloud Run service configuration.
 
+## Performance Considerations
+
+- The service uses Apache Beam for parallel processing of multiple API endpoints, significantly improving performance for large data sets.
+- Pagination is handled within each endpoint's processing, ensuring all data is fetched efficiently.
+- Rate limiting is implemented to respect Xero API usage limits while maximizing throughput.
+
 ## Security
 
 - Xero API credentials are stored in Google Secret Manager
@@ -71,7 +83,7 @@ These should be set in the Cloud Run service configuration.
 
 ## Monitoring and Logging
 
-Logs are available in Google Cloud Console under the Cloud Run service. Consider setting up log-based metrics and alerts for production use.
+Logs are available in Google Cloud Console under the Cloud Run service. The service uses structured logging for better observability. Consider setting up log-based metrics and alerts for production use.
 
 ## Contributing
 

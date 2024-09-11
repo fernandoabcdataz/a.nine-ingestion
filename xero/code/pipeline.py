@@ -5,25 +5,38 @@ from api import fetch_data_from_endpoint
 from storage import WriteJSONToGCS
 import json
 import structlog
+from datetime import datetime
 
 logger = structlog.get_logger()
 
 class FetchDataFromEndpoints(beam.DoFn):
     def process(self, element):
-        for name, endpoint in CONFIG['ENDPOINTS'].items():
-            logger.info("processing_endpoint", name=name)
+        name, endpoint = element
+        logger.info("processing_endpoint", name=name)
+        all_data = []
+        page = 1
+        while True:
             try:
-                data = fetch_data_from_endpoint(endpoint)
+                data, has_more = fetch_data_from_endpoint(endpoint, page)
                 if not data:
-                    logger.info("no_data_received", endpoint=name)
-                    continue
-                json_lines = "\n".join(json.dumps(item) for item in data)
-                yield {
-                    'endpoint_name': name,
-                    'file_content': json_lines
-                }
+                    break
+                all_data.extend(data)
+                if not has_more:
+                    break
+                page += 1
             except Exception as e:
                 logger.error("error_processing_endpoint", name=name, error=str(e))
+                break
+
+        if all_data:
+            ingestion_time = datetime.utcnow().isoformat()
+            json_lines = "\n".join(json.dumps({**item, "ingestion_time": ingestion_time}) for item in all_data)
+            yield {
+                'endpoint_name': name,
+                'file_content': json_lines
+            }
+        else:
+            logger.info("no_data_to_process", name=name)
 
 def run_pipeline(bucket_name):
     options = PipelineOptions()
@@ -32,7 +45,7 @@ def run_pipeline(bucket_name):
     with beam.Pipeline(options=options) as p:
         results = (
             p
-            | 'Start' >> beam.Create([None])
+            | 'Create Endpoints' >> beam.Create(CONFIG['ENDPOINTS'].items())
             | 'FetchDataFromEndpoints' >> beam.ParDo(FetchDataFromEndpoints())
             | 'WriteToGCS' >> beam.ParDo(WriteJSONToGCS(bucket_name))
         )

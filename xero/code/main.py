@@ -1,6 +1,7 @@
+import os
 from flask import Flask, jsonify, request
 from pipeline import run_pipeline
-from config import CONFIG
+from config import get_client_config
 from bigquery_setup import create_external_tables
 import structlog
 import traceback
@@ -8,13 +9,12 @@ import traceback
 app = Flask(__name__)
 logger = structlog.get_logger()
 
+CONFIG = get_client_config()
+
 @app.route('/run', methods=['POST'])
 def trigger_pipeline():
     try:
-        project_id = CONFIG['PROJECT_ID']
-        client_name = CONFIG['CLIENT_NAME']
-        
-        bucket_name = f"{project_id}-{client_name}-xero-data"
+        bucket_name = CONFIG['BUCKET_NAME']
         
         run_pipeline(bucket_name)
         create_external_tables()
@@ -29,4 +29,5 @@ def home():
     return "Xero API Service is running", 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    port = int(os.environ.get('PORT', 8080))
+    app.run(debug=False, host='0.0.0.0', port=port)

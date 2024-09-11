@@ -16,6 +16,8 @@ This repository contains a suite of data ingestion pipelines designed to fetch a
 
 Our ingestion pipeline leverages several Google Cloud Platform (GCP) services to ensure scalability, reliability, and ease of management:
 
+![GCP Architecture Diagram](./assets/gcp_diagram.png)
+
 - **Cloud Run**: Hosts our serverless application, allowing for on-demand scaling and cost-effective operation.
 - **Artifact Registry**: Stores and manages our Docker container images.
 - **Cloud Storage**: Acts as an intermediate storage layer for raw API data.

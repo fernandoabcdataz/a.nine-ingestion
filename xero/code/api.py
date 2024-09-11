@@ -21,7 +21,7 @@ def fetch_data_from_endpoint(endpoint, page=1):
             response.raise_for_status()
             data = response.json()
             
-            # check for pagination information
+            # Check for pagination information
             has_more = False
             if 'Links' in response.headers:
                 links = requests.utils.parse_header_links(response.headers['Links'])

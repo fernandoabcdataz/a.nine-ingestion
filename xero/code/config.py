@@ -46,7 +46,7 @@ ENDPOINTS = {
 }
 
 def get_env_variable(var_name):
-    value = os.getenv(var_name)
+    value = os.environ.get(var_name)
     if value is None:
         raise ValueError(f"Environment variable {var_name} is not set")
     return value
@@ -54,21 +54,16 @@ def get_env_variable(var_name):
 def get_client_config():
     client_name = get_env_variable("CLIENT_NAME")
     project_id = get_env_variable("GOOGLE_CLOUD_PROJECT")
-
-    bucket_name = f"{project_id}-{client_name}-xero-data"
-    secrets_path = f"projects/{project_id}/secrets"
-
+    
     return {
         "CLIENT_NAME": client_name,
         "PROJECT_ID": project_id,
-        "BUCKET_NAME": bucket_name,
-        "SECRETS_PATH": secrets_path,
+        "BUCKET_NAME": f"{project_id}-{client_name}-xero-data",
+        "SECRETS_PATH": f"projects/{project_id}/secrets",
     }
 
-CLIENT_CONFIG = get_client_config()
-
 CONFIG = {
-    **CLIENT_CONFIG,
+    **get_client_config(),
     "TOKEN_URL": TOKEN_URL,
     "ENDPOINTS": ENDPOINTS,
 }

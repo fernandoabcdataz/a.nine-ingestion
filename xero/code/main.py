@@ -5,15 +5,12 @@ from config import get_client_config
 from bigquery_setup import create_external_tables
 import structlog
 import traceback
-from ratelimit import limits, sleep_and_retry
 
 app = Flask(__name__)
 logger = structlog.get_logger()
 
 CONFIG = get_client_config()
 
-@sleep_and_retry
-@limits(calls=5, period=60)  # Limit to 5 calls per minute
 @app.route('/run', methods=['POST'])
 def trigger_pipeline():
     try:

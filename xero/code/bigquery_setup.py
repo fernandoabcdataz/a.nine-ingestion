@@ -13,10 +13,17 @@ def create_external_tables():
         table_id = f"{dataset_id}.xero_{endpoint}"
         
         external_config = bigquery.ExternalConfig("NEWLINE_DELIMITED_JSON")
-        external_config.source_uris = [
-            f"gs://{CONFIG['BUCKET_NAME']}/{endpoint}.json"
-        ]
+        external_config.source_uris = [f"gs://{CONFIG['BUCKET_NAME']}/{endpoint}.json"]
         external_config.autodetect = True
+        external_config.schema = [
+            bigquery.SchemaField("ingestion_time", "TIMESTAMP", mode="REQUIRED"),
+        ]
+        external_config.hive_partitioning_mode = "CUSTOM"
+        external_config.hive_partitioning_options = bigquery.HivePartitioningOptions(
+            mode="CUSTOM",
+            source_uri_prefix=f"gs://{CONFIG['BUCKET_NAME']}/",
+            fields=["ingestion_time"],
+        )
 
         table = bigquery.Table(table_id)
         table.external_data_configuration = external_config
@@ -26,7 +33,7 @@ def create_external_tables():
             client.create_table(table)
             logger.info(f"Created external table {table_id}")
         except Exception as e:
-            logger.error(f"Error creating external table {table_id}: {str(e)}")
+            logger.error(f"Error creating table for {endpoint}: {str(e)}")
 
 if __name__ == "__main__":
     create_external_tables()

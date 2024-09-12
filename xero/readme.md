@@ -1,6 +1,6 @@
 # Xero Data Fetching Service
 
-This repository contains a Cloud Run service that fetches data from Xero API endpoints and stores it in Google Cloud Storage using Apache Beam for efficient data processing.
+This repository contains a Cloud Run service that fetches data from Xero API endpoints and stores it in Google Cloud Storage using Python's multiprocessing for efficient data processing.
 
 ## Overview
 
@@ -8,7 +8,6 @@ The service is designed to run on Google Cloud Platform and uses the following t
 
 - Python 3.9
 - Flask
-- Apache Beam
 - Google Cloud Run
 - Google Cloud Storage
 - Google Secret Manager
@@ -16,7 +15,7 @@ The service is designed to run on Google Cloud Platform and uses the following t
 
 ## Key Features
 
-- Parallel data fetching from multiple Xero API endpoints using Apache Beam
+- Parallel data fetching from multiple Xero API endpoints using multiprocessing
 - Implements pagination for handling large datasets
 - Rate limiting to comply with Xero API restrictions
 - Error handling and retry logic
@@ -26,11 +25,11 @@ The service is designed to run on Google Cloud Platform and uses the following t
 ## Structure
 
 - `main.py`: Entry point for the Flask application
-- `pipeline.py`: Contains the Apache Beam pipeline for data processing
+- `pipeline.py`: Contains the multiprocessing logic for data processing
 - `config.py`: Configuration management
 - `auth.py`: Handles authentication with Xero API
 - `api.py`: Manages API calls to Xero, including pagination and rate limiting
-- `storage.py`: Handles interactions with Google Cloud Storage using Apache Beam
+- `storage.py`: Handles interactions with Google Cloud Storage
 - `bigquery_setup.py`: Sets up BigQuery external tables
 - `Dockerfile`: Defines the container for the Cloud Run service
 - `requirements.txt`: Lists Python dependencies
@@ -58,7 +57,7 @@ Refer to the Terraform configuration in the infrastructure repository for detail
 
 ## Usage
 
-Once deployed, the service can be triggered via HTTP POST request to the `/run` endpoint. This will initiate the data fetching process from Xero, process it using Apache Beam, and store the results in the configured Google Cloud Storage bucket.
+Once deployed, the service can be triggered via HTTP POST request to the `/run` endpoint. This will initiate the data fetching process from Xero, process it using multiprocessing, and store the results in the configured Google Cloud Storage bucket.
 
 ## Environment Variables
 
@@ -71,7 +70,7 @@ These should be set in the Cloud Run service configuration.
 
 ## Performance Considerations
 
-- The service uses Apache Beam for parallel processing of multiple API endpoints, significantly improving performance for large data sets.
+- The service uses Python's multiprocessing for parallel processing of multiple API endpoints, significantly improving performance for large data sets.
 - Pagination is handled within each endpoint's processing, ensuring all data is fetched efficiently.
 - Rate limiting is implemented to respect Xero API usage limits while maximizing throughput.
 

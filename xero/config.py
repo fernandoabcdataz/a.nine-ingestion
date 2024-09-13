@@ -53,7 +53,7 @@ def get_client_config():
     return {
         "CLIENT_NAME": client_name,
         "PROJECT_ID": project_id,
-        "BUCKET_NAME": f"{project_id}-{client_name}-data",
+        "BUCKET_NAME": f"{project_id}-{client_name}-xero-data",
         "SECRETS_PATH": f"projects/{project_id}/secrets",
     }
 

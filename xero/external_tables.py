@@ -1,17 +1,15 @@
 from google.cloud import bigquery
-from config import CONFIG, ENDPOINTS
-import logging
+from config import CONFIG
+from utils import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger()
 
 def create_external_tables():
     client = bigquery.Client(project=CONFIG['PROJECT_ID'])
     dataset_id = f"{CONFIG['PROJECT_ID']}.{CONFIG['CLIENT_NAME']}_ingestion"
 
-    for endpoint, url in ENDPOINTS.items():
+    for endpoint in CONFIG['ENDPOINTS'].keys():
         table_id = f"{dataset_id}.xero_{endpoint}"
-        
         external_config = bigquery.ExternalConfig("NEWLINE_DELIMITED_JSON")
         external_config.source_uris = [f"gs://{CONFIG['BUCKET_NAME']}/{endpoint}.json"]
         external_config.autodetect = True

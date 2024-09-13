@@ -1,38 +1,28 @@
 import requests
-import time
-from auth import get_token
-import structlog
+from authentication import get_token
+from utils import get_logger
 from requests.exceptions import RequestException
 from ratelimit import limits, sleep_and_retry
 
-logger = structlog.get_logger()
+logger = get_logger()
 
 @sleep_and_retry
 @limits(calls=60, period=60)  # limit to 60 calls per minute
-def fetch_data_from_endpoint(endpoint, page=1):
+def fetch_data_from_endpoint(endpoint, offset=0):
     token = get_token()
     headers = {'Authorization': f'Bearer {token["access_token"]}', 'Accept': 'application/json'}
-    params = {'page': page}
-    
+    params = {'offset': offset}
+
     try:
-        logger.info("fetching_data", endpoint=endpoint, page=page)
+        logger.info(f"Fetching data from {endpoint} - Offset {offset}")
         response = requests.get(endpoint, headers=headers, params=params, timeout=30)
         response.raise_for_status()
         data = response.json()
-        
-        # Extract the actual data items from the response
-        actual_data = []
-        for key, value in data.items():
-            if isinstance(value, list):
-                actual_data = value
-                break
-        
-        # Check for more pages
-        has_more = 'Links' in response.headers and any(
-            link['rel'] == 'next' for link in requests.utils.parse_header_links(response.headers['Links'])
-        )
-        
-        return actual_data, has_more
+
+        # extract the actual data items from the response
+        actual_data = next((value for key, value in data.items() if isinstance(value, list)), [])
+
+        return actual_data
     except RequestException as e:
-        logger.error("failed_to_fetch_data", endpoint=endpoint, page=page, error=str(e))
+        logger.error(f"failed to fetch data from {endpoint} - offset {offset}: {str(e)}")
         raise

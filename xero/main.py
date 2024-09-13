@@ -1,32 +1,26 @@
 import os
-from flask import Flask, jsonify, request
-from pipeline import run_pipeline
-from config import get_client_config
-from bigquery_setup import create_external_tables
-import structlog
-import traceback
+from flask import Flask, jsonify
+from data_pipeline import run_pipeline
+from external_tables import create_external_tables
+from utils import get_logger
 
 app = Flask(__name__)
-logger = structlog.get_logger()
-
-CONFIG = get_client_config()
+logger = get_logger()
 
 @app.route('/run', methods=['POST'])
 def trigger_pipeline():
     try:
-        bucket_name = CONFIG['BUCKET_NAME']
-        
-        run_pipeline(bucket_name)
+        run_pipeline()
         create_external_tables()
-        return jsonify({"message": "pipeline completed successfully and BigQuery tables created"}), 200
+        return jsonify({"message": "Pipeline completed successfully and BigQuery tables created"}), 200
     except Exception as e:
         error_message = f"Pipeline error: {str(e)}"
-        logger.error(error_message, traceback=traceback.format_exc())
+        logger.error(error_message)
         return jsonify({"error": error_message}), 500
 
 @app.route('/', methods=['GET'])
 def home():
-    return "Xero API Service is running", 200
+    return "Data Fetching Service is running", 200
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))

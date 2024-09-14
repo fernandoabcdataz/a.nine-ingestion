@@ -20,7 +20,7 @@ The service is designed to run on Google Cloud Platform and uses the following t
 - Rate limiting to comply with API restrictions
 - Error handling and retry logic
 - Efficient data storage in Google Cloud Storage
-- Creates BigQuery external tables for easy data analysis
+- Creates BigQuery tables for easy data analysis
 
 ## Structure
 
@@ -30,7 +30,7 @@ The service is designed to run on Google Cloud Platform and uses the following t
 - `authentication.py`: Handles authentication with the API
 - `api_client.py`: Manages API calls, including pagination and rate limiting
 - `data_storage.py`: Handles interactions with Google Cloud Storage
-- `external_tables.py`: Sets up BigQuery external tables
+- `raw_tables.py`: Sets up BigQuery raw tables
 - `utils.py`: Utility functions (e.g., logging)
 - `Dockerfile`: Defines the container for the Cloud Run service
 - `requirements.txt`: Lists Python dependencies
@@ -41,8 +41,8 @@ The service is designed to run on Google Cloud Platform and uses the following t
 2. Ensure you have the Google Cloud SDK installed and configured
 3. Build and push the Docker image:
    ```bash
-   docker build -t gcr.io/[PROJECT-ID]/[CLIENT-NAME]-data-fetcher:latest .
-   docker push gcr.io/[PROJECT-ID]/[CLIENT-NAME]-data-fetcher:latest
+   docker build -t gcr.io/[PROJECT-ID]/[CLIENT-NAME]-xero:latest .
+   docker push gcr.io/[PROJECT-ID]/[CLIENT-NAME]-xero:latest
 
 ## Deployment
 

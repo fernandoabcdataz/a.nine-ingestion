@@ -30,7 +30,7 @@ The service is designed to run on Google Cloud Platform and uses the following t
 - `authentication.py`: Handles authentication with the API
 - `api_client.py`: Manages API calls, including pagination and rate limiting
 - `data_storage.py`: Handles interactions with Google Cloud Storage
-- `raw_tables.py`: Sets up BigQuery raw tables
+- `table_loader.py`: Sets up BigQuery raw tables
 - `utils.py`: Utility functions (e.g., logging)
 - `Dockerfile`: Defines the container for the Cloud Run service
 - `requirements.txt`: Lists Python dependencies

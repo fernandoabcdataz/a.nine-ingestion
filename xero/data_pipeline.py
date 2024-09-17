@@ -34,13 +34,17 @@ def process_endpoint(name_endpoint):
     offset = 0
     try:
         while True:
-            data = fetch_data_from_endpoint(endpoint, offset)
-            if not data:
-                break
-            all_data.extend(data)
-            if len(data) < 100:
-                break  # Last batch
-            offset += 100  # increment offset by 100
+            try:
+                data = fetch_data_from_endpoint(endpoint, offset)
+                if not data:
+                    break
+                all_data.extend(data)
+                if len(data) < 100:
+                    break  # Last batch
+                offset += 100  # increment offset by 100
+            except RequestException as e:
+                logger.error(f"Error fetching data for {name} at offset {offset}: {str(e)}")
+                break # stop fetching data for this endpoint if an error occurs
         
         if all_data:
             ingestion_time = datetime.utcnow().isoformat()
@@ -59,10 +63,13 @@ def process_endpoint(name_endpoint):
                         if id_field in item:
                             detailed_endpoint = f"{endpoint}/{item[id_field]}"
                             logger.debug(f"Fetching detailed data for {name} with ID: {item[id_field]}")
-                            detailed_item = fetch_data_from_endpoint(detailed_endpoint)  # No offset for detailed calls
-                            if detailed_item:
-                                detailed_item['ingestion_time'] = ingestion_time
-                                detailed_data.append(detailed_item)
+                            try:
+                                detailed_item = fetch_data_from_endpoint(detailed_endpoint)  # No offset for detailed calls
+                                if detailed_item:
+                                    detailed_item['ingestion_time'] = ingestion_time
+                                    detailed_data.append(detailed_item)
+                            except RequestException as e:
+                                logger.error(f"Error fetching detailed data for {name} with ID {item[id_field]}: {str(e)}")
                         else:
                             logger.warning(f"ID field '{id_field}' not found in item for endpoint {name}")
                 else:

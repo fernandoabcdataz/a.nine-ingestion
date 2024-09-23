@@ -41,8 +41,9 @@ The service is designed to run on Google Cloud Platform and uses the following t
 2. Ensure you have the Google Cloud SDK installed and configured
 3. Build and push the Docker image:
    ```bash
-   docker build -t gcr.io/[PROJECT-ID]/[CLIENT-NAME]-xero:latest .
-   docker push gcr.io/[PROJECT-ID]/[CLIENT-NAME]-xero:latest
+   docker build -t gcr.io/[PROJECT-ID]/data-fetching-xero:latest .
+   docker push gcr.io/[PROJECT-ID]/data-fetching-xero:latest
+	 ```
 
 ## Deployment
 
